@@ -1,4 +1,3 @@
-// Works.jsx - Vertical rolling number animation with fixed mobile scroll
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -131,41 +130,98 @@ const Works = () => {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      // TITLE ANIMATION
+      const isMobile = window.innerWidth < 768;
+
+      // TITLE ANIMATION - Simplified for mobile
       if (titleRef.current) {
-        const split = new SplitText(titleRef.current, { type: 'chars' });
-        gsap.set(split.chars, { y: 170, display: 'inline-block' });
-        gsap.to(split.chars, {
-          y: 0,
-          stagger: 0.04,
-          duration: 0.5,
-          ease: 'power2.out',
-          scrollTrigger: { trigger: titleRef.current, start: 'top 85%', toggleActions: 'play none none none' },
-        });
+        if (isMobile) {
+          // Simple fade-in for mobile
+          gsap.set(titleRef.current, { opacity: 0, y: 30 });
+          gsap.to(titleRef.current, {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            ease: 'power2.out',
+            scrollTrigger: { 
+              trigger: titleRef.current, 
+              start: 'top 85%', 
+              toggleActions: 'play none none none' 
+            },
+          });
+        } else {
+          // Character animation for desktop
+          const split = new SplitText(titleRef.current, { type: 'chars' });
+          gsap.set(split.chars, { y: 170, display: 'inline-block' });
+          gsap.to(split.chars, {
+            y: 0,
+            stagger: 0.04,
+            duration: 0.5,
+            ease: 'power2.out',
+            scrollTrigger: { 
+              trigger: titleRef.current, 
+              start: 'top 85%', 
+              toggleActions: 'play none none none' 
+            },
+          });
+        }
       }
 
-      // PARAGRAPH ANIMATION
+      // PARAGRAPH ANIMATION - Simplified for mobile
       if (paragraphRef.current) {
-        const split = new SplitText(paragraphRef.current, { type: 'lines', linesClass: 'line-wrapper' });
-        gsap.set(split.lines, { y: 40, opacity: 0 });
-        gsap.to(split.lines, {
-          y: 0,
-          opacity: 1,
-          duration: 0.8,
-          stagger: 0.15,
-          ease: 'power2.out',
-          delay: 0.7,
-          scrollTrigger: { trigger: titleRef.current, start: 'top 85%', toggleActions: 'play none none none' },
-        });
+        if (isMobile) {
+          // Simple fade-in for mobile
+          gsap.set(paragraphRef.current, { opacity: 0, y: 20 });
+          gsap.to(paragraphRef.current, {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            delay: 0.3,
+            ease: 'power2.out',
+            scrollTrigger: { 
+              trigger: titleRef.current, 
+              start: 'top 85%', 
+              toggleActions: 'play none none none' 
+            },
+          });
+        } else {
+          // Line animation for desktop
+          const split = new SplitText(paragraphRef.current, { 
+            type: 'lines', 
+            linesClass: 'line-wrapper' 
+          });
+          gsap.set(split.lines, { y: 40, opacity: 0 });
+          gsap.to(split.lines, {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            stagger: 0.15,
+            ease: 'power2.out',
+            delay: 0.7,
+            scrollTrigger: { 
+              trigger: titleRef.current, 
+              start: 'top 85%', 
+              toggleActions: 'play none none none' 
+            },
+          });
+        }
       }
 
+      // LABEL ANIMATION
       gsap.from('.works-intro-label', {
-        opacity: 0, y: 30, duration: 1, delay: 0.2, ease: 'power3.out',
-        scrollTrigger: { trigger: '.works-intro-label', start: 'top 85%', toggleActions: 'play none none none' },
+        opacity: 0, 
+        y: isMobile ? 15 : 30, 
+        duration: isMobile ? 0.6 : 1, 
+        delay: isMobile ? 0.1 : 0.2, 
+        ease: 'power3.out',
+        scrollTrigger: { 
+          trigger: '.works-intro-label', 
+          start: 'top 85%', 
+          toggleActions: 'play none none none' 
+        },
       });
 
       // PIN NUMBER (Desktop only)
-      if (window.innerWidth >= 768 && numberContainerRef.current && projectsContainerRef.current) {
+      if (!isMobile && numberContainerRef.current && projectsContainerRef.current) {
         ScrollTrigger.create({
           trigger: projectsContainerRef.current,
           start: 'top top',
@@ -176,12 +232,19 @@ const Works = () => {
       }
 
       // Animate project cards (Desktop only)
-      if (window.innerWidth >= 768) {
+      if (!isMobile) {
         projectRefs.current.forEach((ref) => {
           if (ref) {
             gsap.from(ref, {
-              opacity: 0, y: 60, duration: 1, ease: 'power2.out',
-              scrollTrigger: { trigger: ref, start: 'top 80%', toggleActions: 'play none none none' },
+              opacity: 0, 
+              y: 60, 
+              duration: 1, 
+              ease: 'power2.out',
+              scrollTrigger: { 
+                trigger: ref, 
+                start: 'top 80%', 
+                toggleActions: 'play none none none' 
+              },
             });
           }
         });

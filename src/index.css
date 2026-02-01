@@ -116,3 +116,11 @@ body {
 }
 
 
+
+/* Force show scroll to top button
+button[aria-label="Scroll to top"] {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+} */
