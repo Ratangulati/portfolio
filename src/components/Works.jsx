@@ -1,4 +1,3 @@
-// Works.jsx - Vertical rolling number animation
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -8,8 +7,6 @@ import project2 from '../assets/project2.png';
 import project3 from '../assets/project3.png';
 import project4 from '../assets/project4.png';
 import project5 from '../assets/project5.png';
-
-// import project1Video from '../assets/project1-video.mp4';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
@@ -166,8 +163,8 @@ const Works = () => {
         scrollTrigger: { trigger: '.works-intro-label', start: 'top 85%', toggleActions: 'play none none none' },
       });
 
-      // PIN NUMBER
-      if (numberContainerRef.current && projectsContainerRef.current) {
+      // PIN NUMBER (Desktop only)
+      if (window.innerWidth >= 768 && numberContainerRef.current && projectsContainerRef.current) {
         ScrollTrigger.create({
           trigger: projectsContainerRef.current,
           start: 'top top',
@@ -177,27 +174,29 @@ const Works = () => {
         });
       }
 
-      // Animate project cards
-      projectRefs.current.forEach((ref) => {
-        if (ref) {
-          gsap.from(ref, {
-            opacity: 0, y: 60, duration: 1, ease: 'power2.out',
-            scrollTrigger: { trigger: ref, start: 'top 80%', toggleActions: 'play none none none' },
-          });
-        }
-      });
+      // Animate project cards (Desktop only)
+      if (window.innerWidth >= 768) {
+        projectRefs.current.forEach((ref) => {
+          if (ref) {
+            gsap.from(ref, {
+              opacity: 0, y: 60, duration: 1, ease: 'power2.out',
+              scrollTrigger: { trigger: ref, start: 'top 80%', toggleActions: 'play none none none' },
+            });
+          }
+        });
+      }
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
   return (
-    <section id="works" ref={sectionRef} className="min-h-screen pt-16 md:pt-32 pb-16 md:pb-32 bg-black">
+    <section id="works" ref={sectionRef} className="min-h-screen pt-16 md:pt-32 pb-16 md:pb-32 bg-black overflow-visible">
       <div className="content-container px-5 md:px-10">
-        {/* Header */}
+        {/* Header - MOBILE OPTIMIZED */}
         <div className="mb-12 md:mb-32">
-          <div className="w-full overflow-hidden mb-8 md:mb-12">
-            <h2 ref={titleRef} className="works-title text-4xl md:text-5xl lg:text-[6rem] font-semibold text-[#d1d1c7] tracking-[-0.05em] leading-none">
+          <div className="w-full overflow-visible mb-8 md:mb-12">
+            <h2 ref={titleRef} className="works-title text-[2.25rem] sm:text-[2.75rem] md:text-5xl lg:text-[6rem] font-semibold text-[#d1d1c7] tracking-[-0.05em] leading-[0.95]">
               SELECTED WORKS /
             </h2>
           </div>
@@ -219,56 +218,57 @@ const Works = () => {
         </div>
 
         {/* MOBILE: Horizontal scrolling carousel */}
-        <div className="md:hidden -mx-5">
+        <div className="md:hidden -mx-5 pb-8">
           <div 
-            className="flex gap-4 overflow-x-auto pb-6 px-5 snap-x snap-mandatory"
+            className="mobile-scroll-container flex gap-4 overflow-x-scroll pb-6 px-5 snap-x snap-mandatory"
             style={{ 
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
-              WebkitOverflowScrolling: 'touch'
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehaviorX: 'contain',
+              touchAction: 'pan-x',
             }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
           >
-            <style jsx>{`
-              div::-webkit-scrollbar {
-                display: none;
-              }
-            `}</style>
             {projects.map((project, index) => (
-              <div key={index} className="flex-shrink-0 w-[85vw] snap-center">
+              <div key={index} className="flex-shrink-0 w-[85vw] snap-start">
                 <a 
                   href={project.liveUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  data-cursor="view"
-                  className="relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-white/5 border border-white/10 block"
+                  className="relative w-full aspect-[3/4] rounded-xl overflow-hidden bg-black border border-white/10 block mb-3"
                 >
                   {project.video ? (
                     <video
                       src={project.video}
                       poster={project.image}
-                      className="w-full h-full object-contain bg-[#000]"
+                      className="w-full h-full object-contain bg-black"
                       playsInline
                       muted
                       loop
-                      autoPlay
                     />
                   ) : (
-                    <img src={project.image} alt={project.title} className="w-full h-full object-contain bg-[#000]" />
+                    <img 
+                      src={project.image} 
+                      alt={project.title} 
+                      className="w-full h-full object-contain bg-black" 
+                    />
                   )}
                 </a>
-                <div className="py-3">
-                  <p className="text-sm font-mono text-[#6b645c] mb-1">{project.title}</p>
-                  <p className="text-xl text-[#d1d1c7] font-semibold tracking-tight mb-3">{project.subtitle}</p>
+                <div className="py-2 px-1">
+                  <p className="text-xs font-mono text-[#6b645c] mb-1 uppercase tracking-wide">{project.number} — {project.title}</p>
+                  <h3 className="text-lg text-[#d1d1c7] font-semibold tracking-tight mb-2 leading-tight">{project.subtitle}</h3>
                   <div className="flex gap-2 flex-wrap">
                     <a 
                       href={project.githubUrl} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center min-w-[100px] px-3 py-1 rounded-full border border-[#a39e9b] text-xs uppercase font-medium text-[#a39e9b] whitespace-nowrap hover:bg-[#a39e9b] hover:text-black transition-colors"
+                      className="inline-flex items-center justify-center px-3 py-1.5 rounded-full border border-[#a39e9b] text-xs uppercase font-medium text-[#a39e9b] whitespace-nowrap active:bg-[#a39e9b] active:text-black transition-colors"
                     >
                       GitHub ↗
                     </a>
-                    <span className="inline-flex items-center justify-center min-w-[60px] px-3 py-1 rounded-full bg-[#a39e9b] text-xs font-medium text-[#111827] whitespace-nowrap">
+                    <span className="inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-[#a39e9b] text-xs font-medium text-[#111827] whitespace-nowrap">
                       {project.year}
                     </span>
                   </div>
