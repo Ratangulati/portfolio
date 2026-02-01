@@ -1,5 +1,5 @@
-// App.jsx - With scroll position preservation
-import { useRef, useEffect, useCallback } from 'react';
+// App.jsx - With scroll position preservation and mobile detection
+import { useRef, useEffect, useCallback, useState } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import ScrollTrigger from 'gsap/ScrollTrigger';
@@ -22,6 +22,21 @@ gsap.registerPlugin(ScrollTrigger, ScrollSmoother, useGSAP);
 
 function App() {
   const smoother = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile devices
+  useEffect(() => {
+    const checkMobile = () => {
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth < 768;
+      setIsMobile(isTouchDevice || isSmallScreen);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const scrollToSection = useCallback((selector) => {
     const element = typeof selector === 'string' ? document.querySelector(selector) : selector;
@@ -70,13 +85,18 @@ function App() {
 
   useGSAP(() => {
     try {
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth < 768;
+      const isMobileDevice = isTouchDevice || isSmallScreen;
+
       smoother.current = ScrollSmoother.create({
         wrapper: '#smooth-wrapper',
         content: '#smooth-content',
-        smooth: 2.0,
+        smooth: isMobileDevice ? 1.0 : 2.0,
         effects: true,
-        smoothTouch: 0.1,
-        normalizeScroll: true,
+        smoothTouch: isMobileDevice ? 0.05 : 0.1,
+        normalizeScroll: false,  // Important: Changed to false
+        ignoreMobileResize: true,
       });
     } catch (error) {
       console.warn('ScrollSmoother initialization failed:', error);
@@ -84,13 +104,16 @@ function App() {
     }
   });
 
+
+
   return (
     <ScrollContext.Provider value={{ scrollToSection }}>
-      <CustomCursor />
+      {/* Only render CustomCursor on desktop */}
+      {!isMobile && <CustomCursor />}
       
       <div id="smooth-wrapper">
         <div id="smooth-content">
-          <Navigation />  {/* Back inside smooth-content */}
+          <Navigation />
           <Hero />
           <Services />    
           <Works />
@@ -102,6 +125,5 @@ function App() {
     </ScrollContext.Provider>
   );
 }
-
 
 export default App;

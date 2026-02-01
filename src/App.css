@@ -52,17 +52,58 @@ html, body {
   }
 }
 
-/* Force cursor visibility in mobile menu */
-[data-mobile-menu],
-[data-mobile-menu] *,
-[data-mobile-menu] a,
-[data-mobile-menu] button {
+@media (hover: none) and (pointer: coarse) {
+  .custom-cursor,
+  [class*="cursor"] {
+    display: none !important;
+  }
+}
+
+/* Alternative: Hide cursor on small screens */
+@media (max-width: 768px) {
+  .custom-cursor,
+  [class*="cursor"] {
+    display: none !important;
+  }
+}
+
+/* Force hide custom cursor on mobile - STRONGER RULES */
+@media (max-width: 768px) {
+  .custom-cursor {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  
+  /* Reset all cursor styles to default on mobile */
+  body, * {
+    cursor: auto !important;
+  }
+}
+
+/* Hide on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .custom-cursor {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+}
+
+/* Services section mobile text size fix */
+@media (max-width: 768px) {
+  .services-title {
+    font-size: clamp(2.5rem, 9vw, 4rem) !important;
+    line-height: 1 !important;
+  }
+}
+
+/* Fix mobile menu cursor issues */
+[data-mobile-menu] * {
   cursor: pointer !important;
 }
 
-[data-mobile-menu] {
-  cursor: default !important;
-}
 
 
 /* Ensure dark sections overlap slightly */

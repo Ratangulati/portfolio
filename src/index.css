@@ -73,3 +73,44 @@ body {
   margin-right: auto;
 }
 
+
+@media (max-width: 768px) {
+  .services-title {
+    font-size: clamp(2.5rem, 9vw, 4rem) !important;
+    line-height: 1 !important;
+  }
+}
+
+/* Additional cursor safety - force hide on mobile */
+@media (max-width: 768px), (hover: none) and (pointer: coarse) {
+  .custom-cursor {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+}
+
+
+/* Mobile horizontal scroll fix for Works section */
+@media (max-width: 768px) {
+  .mobile-scroll-container {
+    overflow-x: scroll !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth;
+    touch-action: pan-x !important;
+  }
+  
+  .mobile-scroll-container::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Snap scrolling */
+.snap-x {
+  scroll-snap-type: x mandatory;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+}
