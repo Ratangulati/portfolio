@@ -100,8 +100,8 @@ const Services = () => {
           // Fade in animation - reduced for mobile
           gsap.from(card, {
             opacity: 0,
-            y: isMobile ? 20 : 50, // Less movement on mobile
-            duration: isMobile ? 0.4 : 0.6, // Faster on mobile
+            y: isMobile ? 20 : 50,
+            duration: isMobile ? 0.4 : 0.6,
             ease: 'power2.out',
             scrollTrigger: {
               trigger: card,
@@ -207,9 +207,9 @@ const Services = () => {
         // Intro label animation - reduced for mobile
         const labelAnimST = gsap.from('.services-intro-label', {
           opacity: 0,
-          y: isMobile ? 15 : 30, // Less movement on mobile
-          duration: isMobile ? 0.6 : 1, // Faster on mobile
-          delay: isMobile ? 0.1 : 0.2, // Less delay on mobile
+          y: isMobile ? 15 : 30,
+          duration: isMobile ? 0.6 : 1,
+          delay: isMobile ? 0.1 : 0.2,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: '.services-intro-label',
@@ -306,7 +306,7 @@ const Services = () => {
         {services.map((service, index) => (
           <div
             key={index}
-            className="service-card bg-black border-t border-[#3a3633] min-h-[70vh]"
+            className="service-card bg-black border-t border-[#3a3633] min-h-[60vh] md:min-h-[70vh]"
             style={{ zIndex: 20 + index }}
           >
             <div className="content-container px-5 md:px-10 py-5 md:py-6">
