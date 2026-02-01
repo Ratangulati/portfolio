@@ -50,7 +50,7 @@ const Footer = () => {
   return (
     <>
       <footer className="bg-[#e8e8e3] py-12 md:py-16 relative">
-        <div className="max-w-7xl mx-auto px-5 md:px-10 pb-24 md:pb-0">
+        <div className="max-w-7xl mx-auto px-5 md:px-0 pb-24 md:pb-0">
           {/* Mobile Layout */}
           <div className="block md:hidden space-y-8">
             {/* Menu Section */}
