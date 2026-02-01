@@ -1,13 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import SplitText from 'gsap/SplitText';
 
-gsap.registerPlugin(ScrollTrigger, SplitText);
+gsap.registerPlugin(ScrollTrigger);
 
-// Heights for stacking (desktop only)
+// Heights for stacking
+const TITLE_BAR_HEIGHT_MOBILE = 100;
 const TITLE_BAR_HEIGHT_DESKTOP = 170;
 const CARD_ROW_HEIGHT_DESKTOP = 90;
+const CARD_ROW_HEIGHT_MOBILE = 80;
 
 const Services = () => {
   const sectionRef = useRef(null);
@@ -15,7 +16,7 @@ const Services = () => {
   const titleRef = useRef(null);
   const paragraphRef = useRef(null);
   const cardsContainerRef = useRef(null);
-  const splitInstancesRef = useRef([]);
+  const [isMounted, setIsMounted] = useState(false);
 
   const services = [
     {
@@ -50,193 +51,223 @@ const Services = () => {
     },
   ];
 
+  // Set mounted state after component mounts (client-side only)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 100);
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
 
     const ctx = gsap.context(() => {
+      let titleScrollTrigger;
+      let cardScrollTriggers = [];
+      let animationScrollTriggers = [];
+
       const setupAnimation = () => {
-        // Clean up old SplitText instances
-        splitInstancesRef.current.forEach(instance => {
-          if (instance && instance.revert) {
-            instance.revert();
-          }
-        });
-        splitInstancesRef.current = [];
+        // Kill existing ScrollTriggers
+        if (titleScrollTrigger) titleScrollTrigger.kill();
+        cardScrollTriggers.forEach(st => st.kill());
+        animationScrollTriggers.forEach(st => st.kill());
+        cardScrollTriggers = [];
+        animationScrollTriggers = [];
 
-        // Kill all ScrollTriggers
-        ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-
+        // Get actual measurements
         const isMobile = window.innerWidth < 768;
+        const titleBarHeight = isMobile ? TITLE_BAR_HEIGHT_MOBILE : TITLE_BAR_HEIGHT_DESKTOP;
+        const CARD_ROW_HEIGHT = isMobile ? CARD_ROW_HEIGHT_MOBILE : CARD_ROW_HEIGHT_DESKTOP;
 
-        // DESKTOP ONLY: Pin and stack cards
-        if (!isMobile) {
-          const titleBarHeight = TITLE_BAR_HEIGHT_DESKTOP;
-          const CARD_ROW_HEIGHT = CARD_ROW_HEIGHT_DESKTOP;
-
-          // Pin title at top
-          ScrollTrigger.create({
-            trigger: titleWrapperRef.current,
-            start: 'top top',
-            endTrigger: sectionRef.current,
-            end: 'bottom bottom',
-            pin: true,
-            pinSpacing: false,
-            invalidateOnRefresh: true,
-          });
-
-          // Pin each card
-          const cards = gsap.utils.toArray('.service-card');
-          cards.forEach((card, index) => {
-            const pinY = titleBarHeight + index * CARD_ROW_HEIGHT;
-
-            ScrollTrigger.create({
-              trigger: card,
-              start: `top ${pinY}px`,
-              endTrigger: sectionRef.current,
-              end: 'bottom bottom',
-              pin: true,
-              pinSpacing: false,
-              invalidateOnRefresh: true,
-            });
-
-            // Fade in animation
+        // Skip desktop-only animations on mobile
+        if (isMobile) {
+          // On mobile, just do simple fade-ins, no pinning
+          const mobileCards = document.querySelectorAll('.mobile-service-card');
+          mobileCards.forEach((card) => {
             gsap.from(card, {
               opacity: 0,
-              y: 50,
+              y: 30,
               duration: 0.6,
               ease: 'power2.out',
               scrollTrigger: {
                 trigger: card,
                 start: 'top 85%',
                 toggleActions: 'play none none none',
-                invalidateOnRefresh: true,
               },
             });
           });
+
+          // Simple title animation
+          const titleAnimST = gsap.from(titleRef.current, {
+            opacity: 0,
+            y: 30,
+            duration: 0.8,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: titleRef.current,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+            },
+          });
+          if (titleAnimST.scrollTrigger) {
+            animationScrollTriggers.push(titleAnimST.scrollTrigger);
+          }
+
+          // Simple paragraph animation
+          const paraAnimST = gsap.from(paragraphRef.current, {
+            opacity: 0,
+            y: 20,
+            duration: 0.8,
+            delay: 0.2,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: paragraphRef.current,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+            },
+          });
+          if (paraAnimST.scrollTrigger) {
+            animationScrollTriggers.push(paraAnimST.scrollTrigger);
+          }
+
+          return;
         }
 
-        // Title animation - simplified for mobile
+        // Desktop animations (pinning only on desktop)
+        // Pin title at top
+        titleScrollTrigger = ScrollTrigger.create({
+          trigger: titleWrapperRef.current,
+          start: 'top top',
+          endTrigger: sectionRef.current,
+          end: 'bottom bottom',
+          pin: true,
+          pinSpacing: false,
+          invalidateOnRefresh: true,
+        });
+
+        // Pin each card
+        const cards = gsap.utils.toArray('.service-card');
+        cards.forEach((card, index) => {
+          const pinY = titleBarHeight + index * CARD_ROW_HEIGHT;
+
+          const cardST = ScrollTrigger.create({
+            trigger: card,
+            start: `top ${pinY}px`,
+            endTrigger: sectionRef.current,
+            end: 'bottom bottom',
+            pin: true,
+            pinSpacing: false,
+            invalidateOnRefresh: true,
+          });
+          cardScrollTriggers.push(cardST);
+
+          // Fade in animation
+          gsap.from(card, {
+            opacity: 0,
+            y: 50,
+            duration: 0.6,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: card,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+              invalidateOnRefresh: true,
+            },
+          });
+        });
+
+        // Simple title animation for desktop (no SplitText)
         if (titleRef.current) {
-          if (isMobile) {
-            gsap.set(titleRef.current, { opacity: 0, y: 30 });
-            gsap.to(titleRef.current, {
-              opacity: 1,
-              y: 0,
-              duration: 0.5,
-              ease: 'power2.out',
-              scrollTrigger: {
-                trigger: titleRef.current,
-                start: 'top 85%',
-                toggleActions: 'play none none none',
-              },
-            });
-          } else {
-            const split = new SplitText(titleRef.current, { type: 'chars' });
-            splitInstancesRef.current.push(split);
-            gsap.set(split.chars, { y: 170, display: 'inline-block' });
-            
-            gsap.to(split.chars, {
-              y: 0,
-              stagger: 0.04,
-              duration: 0.5,
-              ease: 'power2.out',
-              scrollTrigger: {
-                trigger: titleRef.current,
-                start: 'top 85%',
-                toggleActions: 'play none none none',
-              },
-            });
+          const titleAnimST = gsap.from(titleRef.current, {
+            opacity: 0,
+            y: 50,
+            duration: 0.8,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: titleRef.current,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+              invalidateOnRefresh: true,
+            },
+          });
+          if (titleAnimST.scrollTrigger) {
+            animationScrollTriggers.push(titleAnimST.scrollTrigger);
           }
         }
 
-        // Paragraph animation - simplified for mobile
+        // Simple paragraph animation (no SplitText)
         if (paragraphRef.current) {
-          if (isMobile) {
-            gsap.set(paragraphRef.current, { opacity: 0, y: 20 });
-            gsap.to(paragraphRef.current, {
-              opacity: 1,
-              y: 0,
-              duration: 0.5,
-              delay: 0.3,
-              ease: 'power2.out',
-              scrollTrigger: {
-                trigger: titleRef.current,
-                start: 'top 85%',
-                toggleActions: 'play none none none',
-              },
-            });
-          } else {
-            const split = new SplitText(paragraphRef.current, {
-              type: 'lines',
-              linesClass: 'line-wrapper',
-            });
-            splitInstancesRef.current.push(split);
-            gsap.set(split.lines, { y: 40, opacity: 0 });
-            
-            gsap.to(split.lines, {
-              y: 0,
-              opacity: 1,
-              duration: 0.8,
-              stagger: 0.15,
-              ease: 'power2.out',
-              delay: 0.7,
-              scrollTrigger: {
-                trigger: titleRef.current,
-                start: 'top 85%',
-                toggleActions: 'play none none none',
-              },
-            });
+          const paraAnimST = gsap.from(paragraphRef.current, {
+            opacity: 0,
+            y: 30,
+            duration: 0.8,
+            delay: 0.3,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: titleRef.current,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+              invalidateOnRefresh: true,
+            },
+          });
+          if (paraAnimST.scrollTrigger) {
+            animationScrollTriggers.push(paraAnimST.scrollTrigger);
           }
         }
 
-        // Label animation
-        gsap.from('.services-intro-label', {
+        // Intro label animation
+        const labelAnimST = gsap.from('.services-intro-label', {
           opacity: 0,
-          y: isMobile ? 15 : 30,
-          duration: isMobile ? 0.6 : 1,
-          delay: isMobile ? 0.1 : 0.2,
+          y: 30,
+          duration: 1,
+          delay: 0.2,
           ease: 'power3.out',
           scrollTrigger: {
             trigger: '.services-intro-label',
             start: 'top 85%',
             toggleActions: 'play none none none',
+            invalidateOnRefresh: true,
           },
         });
-
-        ScrollTrigger.refresh();
+        if (labelAnimST.scrollTrigger) {
+          animationScrollTriggers.push(labelAnimST.scrollTrigger);
+        }
       };
 
+      // Initial setup
       setupAnimation();
 
-      let resizeTimer;
+      // Handle resize with debounce
       const handleResize = () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-          setupAnimation();
-        }, 300);
+        setupAnimation();
+        // Add delay before refresh for mobile
+        setTimeout(() => {
+          ScrollTrigger.refresh();
+        }, 100);
       };
 
-      window.addEventListener('resize', handleResize);
+      let resizeTimer;
+      const debouncedResize = () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(handleResize, 250);
+      };
+
+      window.addEventListener('resize', debouncedResize);
 
       return () => {
-        window.removeEventListener('resize', handleResize);
-        clearTimeout(resizeTimer);
+        window.removeEventListener('resize', debouncedResize);
+        if (titleScrollTrigger) titleScrollTrigger.kill();
+        cardScrollTriggers.forEach(st => st.kill());
+        animationScrollTriggers.forEach(st => st.kill());
       };
     }, sectionRef);
 
-    return () => {
-      clearTimeout(timer);
-      splitInstancesRef.current.forEach(instance => {
-        if (instance && instance.revert) {
-          instance.revert();
-        }
-      });
-      splitInstancesRef.current = [];
-      ctx.revert();
-    };
-  }, []);
+    return () => ctx.revert();
+  }, [isMounted]);
+
+  // Calculate title bar height on client side only
+  const getTitleBarHeight = () => {
+    if (!isMounted) return TITLE_BAR_HEIGHT_DESKTOP;
+    return window.innerWidth < 768 ? TITLE_BAR_HEIGHT_MOBILE : TITLE_BAR_HEIGHT_DESKTOP;
+  };
 
   return (
     <section
@@ -244,14 +275,12 @@ const Services = () => {
       ref={sectionRef}
       className="relative z-10 bg-black rounded-t-3xl"
     >
-      {/* Title Bar */}
+      {/* Pinned Title Bar */}
       <div
         ref={titleWrapperRef}
         className="bg-black z-30 flex items-end rounded-t-3xl pt-6 pb-3"
         style={{ 
-          minHeight: typeof window !== 'undefined' && window.innerWidth >= 768 
-            ? `${TITLE_BAR_HEIGHT_DESKTOP}px` 
-            : 'auto'
+          minHeight: `${getTitleBarHeight()}px`
         }}
       >
         <div className="content-container px-5 md:px-10 w-full">
@@ -288,10 +317,10 @@ const Services = () => {
         </div>
       </div>
 
-      {/* MOBILE: Horizontal scroll carousel with left spacing */}
+      {/* MOBILE: Horizontal scroll carousel - ONLY SHOWN ON MOBILE */}
       <div className="md:hidden pb-12 pl-5">
         <div 
-          className="flex gap-4 overflow-x-auto pb-6 pr-5 snap-x snap-mandatory scrollbar-hide"
+          className="flex gap-5 overflow-x-auto pb-6 pr-5 snap-x snap-mandatory scrollbar-hide"
           style={{
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
@@ -306,7 +335,7 @@ const Services = () => {
           {services.map((service, index) => (
             <div 
               key={index} 
-              className="flex-shrink-0 w-[85vw] snap-start bg-black border border-[#3a3633] rounded-2xl p-6"
+              className="mobile-service-card flex-shrink-0 w-[80vw] snap-start bg-black border border-[#3a3633] rounded-2xl p-6"
             >
               <div className="mb-4">
                 <span className="text-4xl font-semibold text-[#d1d1c7] block mb-2">
@@ -339,7 +368,7 @@ const Services = () => {
         </div>
       </div>
 
-      {/* DESKTOP: Stacking cards */}
+      {/* DESKTOP: Stacking cards - ONLY SHOWN ON DESKTOP */}
       <div ref={cardsContainerRef} className="relative hidden md:block">
         {services.map((service, index) => (
           <div
@@ -348,13 +377,16 @@ const Services = () => {
             style={{ zIndex: 20 + index }}
           >
             <div className="content-container px-5 md:px-10 py-5 md:py-6">
+              {/* Card Header Row */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-0">
+                {/* Number - desktop only */}
                 <div className="hidden lg:block lg:col-span-5">
                   <span className="text-xl md:text-5xl lg:text-5xl tracking-tight font-semibold text-[#d1d1c7]">
                     ({service.number})
                   </span>
                 </div>
                 
+                {/* Title */}
                 <div className="col-span-1 lg:col-span-7">
                   <h3 className="text-3xl md:text-4xl lg:text-5xl tracking-tight font-semibold pb-4 text-[#d1d1c7] leading-tight">
                     {service.title}
@@ -362,6 +394,7 @@ const Services = () => {
                 </div>
               </div>
 
+              {/* Card Content */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                 <div className="hidden lg:block lg:col-span-5"></div>
                 <div className="col-span-1 lg:col-span-7">
