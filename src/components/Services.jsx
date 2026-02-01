@@ -288,10 +288,10 @@ const Services = () => {
         </div>
       </div>
 
-      {/* MOBILE: Horizontal scroll carousel */}
-      <div className="md:hidden pb-12">
+      {/* MOBILE: Horizontal scroll carousel with left spacing */}
+      <div className="md:hidden pb-12 pl-5">
         <div 
-          className="flex gap-4 overflow-x-auto pb-6 pl-5 pr-5 snap-x snap-mandatory scrollbar-hide"
+          className="flex gap-4 overflow-x-auto pb-6 pr-5 snap-x snap-mandatory scrollbar-hide"
           style={{
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
