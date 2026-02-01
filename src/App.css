@@ -1,0 +1,75 @@
+/* App-specific styles */
+.App {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+#smooth-wrapper {
+  overflow: hidden;
+  position: fixed;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+}
+
+#smooth-content {
+  overflow: visible;
+  width: 100%;
+
+}
+
+/* Fix white line flashes at section boundaries */
+section {
+  position: relative;
+  z-index: 1;
+}
+
+/* Hide scrollbar for all browsers */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+
+html, body {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+  .mobile-menu-button {
+    display: none !important;
+  }
+}
+
+/* Force cursor visibility in mobile menu */
+[data-mobile-menu],
+[data-mobile-menu] *,
+[data-mobile-menu] a,
+[data-mobile-menu] button {
+  cursor: pointer !important;
+}
+
+[data-mobile-menu] {
+  cursor: default !important;
+}
+
+
+/* Ensure dark sections overlap slightly */
+/* section[id="services"],
+section[id="works"],
+section[id="skills-about"],
+section[id="contact"] {
+  margin-top: -2px;
+} */
+
