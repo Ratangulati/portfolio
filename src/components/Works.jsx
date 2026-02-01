@@ -19,7 +19,6 @@ const Works = () => {
   const [hoveredProject, setHoveredProject] = useState(null);
   const projectRefs = useRef([]);
   const projectsContainerRef = useRef(null);
-  const splitInstancesRef = useRef([]);
 
   const projects = [
     { 
@@ -130,24 +129,13 @@ const Works = () => {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 100);
-
     const ctx = gsap.context(() => {
       const isMobile = window.innerWidth < 768;
-
-      // Clean up old SplitText instances
-      splitInstancesRef.current.forEach(instance => {
-        if (instance && instance.revert) {
-          instance.revert();
-        }
-      });
-      splitInstancesRef.current = [];
 
       // TITLE ANIMATION - Simplified for mobile
       if (titleRef.current) {
         if (isMobile) {
+          // Simple fade-in for mobile
           gsap.set(titleRef.current, { opacity: 0, y: 30 });
           gsap.to(titleRef.current, {
             opacity: 1,
@@ -161,8 +149,8 @@ const Works = () => {
             },
           });
         } else {
+          // Character animation for desktop
           const split = new SplitText(titleRef.current, { type: 'chars' });
-          splitInstancesRef.current.push(split);
           gsap.set(split.chars, { y: 170, display: 'inline-block' });
           gsap.to(split.chars, {
             y: 0,
@@ -181,6 +169,7 @@ const Works = () => {
       // PARAGRAPH ANIMATION - Simplified for mobile
       if (paragraphRef.current) {
         if (isMobile) {
+          // Simple fade-in for mobile
           gsap.set(paragraphRef.current, { opacity: 0, y: 20 });
           gsap.to(paragraphRef.current, {
             opacity: 1,
@@ -195,11 +184,11 @@ const Works = () => {
             },
           });
         } else {
+          // Line animation for desktop
           const split = new SplitText(paragraphRef.current, { 
             type: 'lines', 
             linesClass: 'line-wrapper' 
           });
-          splitInstancesRef.current.push(split);
           gsap.set(split.lines, { y: 40, opacity: 0 });
           gsap.to(split.lines, {
             y: 0,
@@ -262,16 +251,7 @@ const Works = () => {
       }
     }, sectionRef);
 
-    return () => {
-      clearTimeout(timer);
-      splitInstancesRef.current.forEach(instance => {
-        if (instance && instance.revert) {
-          instance.revert();
-        }
-      });
-      splitInstancesRef.current = [];
-      ctx.revert();
-    };
+    return () => ctx.revert();
   }, []);
 
   return (
@@ -301,21 +281,20 @@ const Works = () => {
           </div>
         </div>
 
-        {/* MOBILE: Horizontal scrolling carousel with left spacing */}
-        <div className="md:hidden pb-12 pl-5">
+        {/* MOBILE: Horizontal scrolling carousel */}
+        <div className="md:hidden -mx-5 pb-8">
           <div 
-            className="flex gap-4 overflow-x-auto pb-6 pr-5 snap-x snap-mandatory scrollbar-hide"
+            className="mobile-scroll-container flex gap-4 overflow-x-scroll pb-6 px-5 snap-x snap-mandatory"
             style={{ 
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
               WebkitOverflowScrolling: 'touch',
+              overscrollBehaviorX: 'contain',
+              touchAction: 'pan-x',
             }}
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
           >
-            <style jsx>{`
-              .scrollbar-hide::-webkit-scrollbar {
-                display: none;
-              }
-            `}</style>
             {projects.map((project, index) => (
               <div key={index} className="flex-shrink-0 w-[85vw] snap-start">
                 <a 
