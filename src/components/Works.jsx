@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import SplitText from 'gsap/SplitText';
 import project1 from '../assets/project1.png';
 import project2 from '../assets/project2.png';
 import project3 from '../assets/project3.png';
 import project4 from '../assets/project4.png';
 import project5 from '../assets/project5.png';
 
-gsap.registerPlugin(ScrollTrigger, SplitText);
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 const Works = () => {
   const sectionRef = useRef(null);
@@ -17,6 +18,7 @@ const Works = () => {
   const numberContainerRef = useRef(null);
   const [currentNumber, setCurrentNumber] = useState('01');
   const [hoveredProject, setHoveredProject] = useState(null);
+  const [isMounted, setIsMounted] = useState(false);
   const projectRefs = useRef([]);
   const projectsContainerRef = useRef(null);
 
@@ -78,12 +80,19 @@ const Works = () => {
     },
   ];
 
+  // Set mounted state
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Rolling digit component
   const RollingDigit = ({ digit }) => {
     const digitRef = useRef(null);
     const prevDigit = useRef(digit);
 
     useEffect(() => {
+      if (!isMounted) return;
+      
       if (prevDigit.current !== digit && digitRef.current) {
         gsap.fromTo(
           digitRef.current,
@@ -92,7 +101,7 @@ const Works = () => {
         );
         prevDigit.current = digit;
       }
-    }, [digit]);
+    }, [digit, isMounted]);
 
     return (
       <div className="digit-container" style={{ 
@@ -111,6 +120,8 @@ const Works = () => {
 
   // Number changes based on scroll
   useEffect(() => {
+    if (!isMounted || typeof window === 'undefined') return;
+
     const ctx = gsap.context(() => {
       projectRefs.current.forEach((ref, index) => {
         if (ref) {
@@ -126,99 +137,61 @@ const Works = () => {
     }, sectionRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [isMounted]);
 
   useEffect(() => {
+    if (!isMounted || typeof window === 'undefined') return;
+
     const ctx = gsap.context(() => {
       const isMobile = window.innerWidth < 768;
 
-      // TITLE ANIMATION - Simplified for mobile
+      // TITLE ANIMATION - Simplified, no SplitText
       if (titleRef.current) {
-        if (isMobile) {
-          // Simple fade-in for mobile
-          gsap.set(titleRef.current, { opacity: 0, y: 30 });
-          gsap.to(titleRef.current, {
-            opacity: 1,
-            y: 0,
-            duration: 0.6,
-            ease: 'power2.out',
-            scrollTrigger: { 
-              trigger: titleRef.current, 
-              start: 'top 85%', 
-              toggleActions: 'play none none none' 
-            },
-          });
-        } else {
-          // Character animation for desktop
-          const split = new SplitText(titleRef.current, { type: 'chars' });
-          gsap.set(split.chars, { y: 170, display: 'inline-block' });
-          gsap.to(split.chars, {
-            y: 0,
-            stagger: 0.04,
-            duration: 0.5,
-            ease: 'power2.out',
-            scrollTrigger: { 
-              trigger: titleRef.current, 
-              start: 'top 85%', 
-              toggleActions: 'play none none none' 
-            },
-          });
-        }
+        gsap.from(titleRef.current, {
+          opacity: 0,
+          y: isMobile ? 30 : 50,
+          duration: isMobile ? 0.6 : 0.8,
+          ease: 'power2.out',
+          scrollTrigger: { 
+            trigger: titleRef.current, 
+            start: 'top 85%', 
+            toggleActions: 'play none none none' 
+          },
+        });
       }
 
-      // PARAGRAPH ANIMATION - Simplified for mobile
+      // PARAGRAPH ANIMATION - Simplified, no SplitText
       if (paragraphRef.current) {
-        if (isMobile) {
-          // Simple fade-in for mobile
-          gsap.set(paragraphRef.current, { opacity: 0, y: 20 });
-          gsap.to(paragraphRef.current, {
-            opacity: 1,
-            y: 0,
-            duration: 0.5,
-            delay: 0.3,
-            ease: 'power2.out',
-            scrollTrigger: { 
-              trigger: titleRef.current, 
-              start: 'top 85%', 
-              toggleActions: 'play none none none' 
-            },
-          });
-        } else {
-          // Line animation for desktop
-          const split = new SplitText(paragraphRef.current, { 
-            type: 'lines', 
-            linesClass: 'line-wrapper' 
-          });
-          gsap.set(split.lines, { y: 40, opacity: 0 });
-          gsap.to(split.lines, {
-            y: 0,
-            opacity: 1,
-            duration: 0.8,
-            stagger: 0.15,
-            ease: 'power2.out',
-            delay: 0.7,
-            scrollTrigger: { 
-              trigger: titleRef.current, 
-              start: 'top 85%', 
-              toggleActions: 'play none none none' 
-            },
-          });
-        }
+        gsap.from(paragraphRef.current, {
+          opacity: 0,
+          y: isMobile ? 20 : 30,
+          duration: isMobile ? 0.5 : 0.8,
+          delay: isMobile ? 0.2 : 0.3,
+          ease: 'power2.out',
+          scrollTrigger: { 
+            trigger: titleRef.current, 
+            start: 'top 85%', 
+            toggleActions: 'play none none none' 
+          },
+        });
       }
 
       // LABEL ANIMATION
-      gsap.from('.works-intro-label', {
-        opacity: 0, 
-        y: isMobile ? 15 : 30, 
-        duration: isMobile ? 0.6 : 1, 
-        delay: isMobile ? 0.1 : 0.2, 
-        ease: 'power3.out',
-        scrollTrigger: { 
-          trigger: '.works-intro-label', 
-          start: 'top 85%', 
-          toggleActions: 'play none none none' 
-        },
-      });
+      const labelElement = document.querySelector('.works-intro-label');
+      if (labelElement) {
+        gsap.from(labelElement, {
+          opacity: 0, 
+          y: isMobile ? 15 : 30, 
+          duration: isMobile ? 0.6 : 1, 
+          delay: isMobile ? 0.1 : 0.2, 
+          ease: 'power3.out',
+          scrollTrigger: { 
+            trigger: labelElement, 
+            start: 'top 85%', 
+            toggleActions: 'play none none none' 
+          },
+        });
+      }
 
       // PIN NUMBER (Desktop only)
       if (!isMobile && numberContainerRef.current && projectsContainerRef.current) {
@@ -252,7 +225,7 @@ const Works = () => {
     }, sectionRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [isMounted]);
 
   return (
     <section id="works" ref={sectionRef} className="min-h-screen pt-16 md:pt-32 pb-16 md:pb-32 bg-black">
@@ -281,20 +254,25 @@ const Works = () => {
           </div>
         </div>
 
-        {/* MOBILE: Horizontal scrolling carousel */}
+        {/* MOBILE: Horizontal scrolling carousel with improved scroll behavior */}
         <div className="md:hidden -mx-5 pb-8">
           <div 
-            className="mobile-scroll-container flex gap-4 overflow-x-scroll pb-6 px-5 snap-x snap-mandatory"
+            className="mobile-scroll-container flex gap-4 pb-6 px-5 snap-x snap-mandatory"
             style={{ 
+              overflowX: 'auto',
+              overflowY: 'hidden',
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
               WebkitOverflowScrolling: 'touch',
-              overscrollBehaviorX: 'contain',
-              touchAction: 'pan-x',
             }}
-            onTouchStart={(e) => e.stopPropagation()}
-            onTouchMove={(e) => e.stopPropagation()}
           >
+            <style dangerouslySetInnerHTML={{
+              __html: `
+                .mobile-scroll-container::-webkit-scrollbar {
+                  display: none;
+                }
+              `
+            }} />
             {projects.map((project, index) => (
               <div key={index} className="flex-shrink-0 w-[85vw] snap-start">
                 <a 
@@ -349,8 +327,12 @@ const Works = () => {
             <div ref={numberContainerRef} className="pt-2 md:pt-3">
               <div className="text-[12rem] lg:text-[20rem] font-medium text-[#a39e9b] leading-none tracking-[-0.05em]" 
                    style={{ fontFamily: "'Cousine', monospace" }}>
-                <RollingDigit digit={currentNumber[0]} />
-                <RollingDigit digit={currentNumber[1]} />
+                {isMounted && (
+                  <>
+                    <RollingDigit digit={currentNumber[0]} />
+                    <RollingDigit digit={currentNumber[1]} />
+                  </>
+                )}
               </div>
             </div>
           </div>

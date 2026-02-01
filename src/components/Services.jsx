@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-gsap.registerPlugin(ScrollTrigger);
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 // Heights for stacking
 const TITLE_BAR_HEIGHT_MOBILE = 100;
@@ -17,6 +19,7 @@ const Services = () => {
   const paragraphRef = useRef(null);
   const cardsContainerRef = useRef(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [titleBarHeight, setTitleBarHeight] = useState(TITLE_BAR_HEIGHT_DESKTOP);
 
   const services = [
     {
@@ -51,13 +54,26 @@ const Services = () => {
     },
   ];
 
-  // Set mounted state after component mounts (client-side only)
+  // Set mounted state and calculate height on client side only
   useEffect(() => {
     setIsMounted(true);
+    const updateHeight = () => {
+      setTitleBarHeight(
+        window.innerWidth < 768 ? TITLE_BAR_HEIGHT_MOBILE : TITLE_BAR_HEIGHT_DESKTOP
+      );
+    };
+    updateHeight();
+
+    const handleResize = () => {
+      updateHeight();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {
-    if (!isMounted) return;
+    if (!isMounted || typeof window === 'undefined') return;
 
     const ctx = gsap.context(() => {
       let titleScrollTrigger;
@@ -174,7 +190,7 @@ const Services = () => {
           });
         });
 
-        // Simple title animation for desktop (no SplitText)
+        // Simple title animation for desktop
         if (titleRef.current) {
           const titleAnimST = gsap.from(titleRef.current, {
             opacity: 0,
@@ -193,7 +209,7 @@ const Services = () => {
           }
         }
 
-        // Simple paragraph animation (no SplitText)
+        // Simple paragraph animation
         if (paragraphRef.current) {
           const paraAnimST = gsap.from(paragraphRef.current, {
             opacity: 0,
@@ -214,31 +230,35 @@ const Services = () => {
         }
 
         // Intro label animation
-        const labelAnimST = gsap.from('.services-intro-label', {
-          opacity: 0,
-          y: 30,
-          duration: 1,
-          delay: 0.2,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: '.services-intro-label',
-            start: 'top 85%',
-            toggleActions: 'play none none none',
-            invalidateOnRefresh: true,
-          },
-        });
-        if (labelAnimST.scrollTrigger) {
-          animationScrollTriggers.push(labelAnimST.scrollTrigger);
+        const labelElement = document.querySelector('.services-intro-label');
+        if (labelElement) {
+          const labelAnimST = gsap.from(labelElement, {
+            opacity: 0,
+            y: 30,
+            duration: 1,
+            delay: 0.2,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: labelElement,
+              start: 'top 85%',
+              toggleActions: 'play none none none',
+              invalidateOnRefresh: true,
+            },
+          });
+          if (labelAnimST.scrollTrigger) {
+            animationScrollTriggers.push(labelAnimST.scrollTrigger);
+          }
         }
       };
 
-      // Initial setup
-      setupAnimation();
+      // Delay initial setup slightly to ensure DOM is ready
+      setTimeout(() => {
+        setupAnimation();
+      }, 100);
 
       // Handle resize with debounce
       const handleResize = () => {
         setupAnimation();
-        // Add delay before refresh for mobile
         setTimeout(() => {
           ScrollTrigger.refresh();
         }, 100);
@@ -263,12 +283,6 @@ const Services = () => {
     return () => ctx.revert();
   }, [isMounted]);
 
-  // Calculate title bar height on client side only
-  const getTitleBarHeight = () => {
-    if (!isMounted) return TITLE_BAR_HEIGHT_DESKTOP;
-    return window.innerWidth < 768 ? TITLE_BAR_HEIGHT_MOBILE : TITLE_BAR_HEIGHT_DESKTOP;
-  };
-
   return (
     <section
       id="services"
@@ -280,7 +294,7 @@ const Services = () => {
         ref={titleWrapperRef}
         className="bg-black z-30 flex items-end rounded-t-3xl pt-6 pb-3"
         style={{ 
-          minHeight: `${getTitleBarHeight()}px`
+          minHeight: `${titleBarHeight}px`
         }}
       >
         <div className="content-container px-5 md:px-10 w-full">
@@ -320,18 +334,20 @@ const Services = () => {
       {/* MOBILE: Horizontal scroll carousel - ONLY SHOWN ON MOBILE */}
       <div className="md:hidden pb-12 pl-5">
         <div 
-          className="flex gap-5 overflow-x-auto pb-6 pr-5 snap-x snap-mandatory scrollbar-hide"
+          className="flex gap-5 overflow-x-auto pb-6 pr-5 snap-x snap-mandatory"
           style={{
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          <style jsx>{`
-            .scrollbar-hide::-webkit-scrollbar {
-              display: none;
-            }
-          `}</style>
+          <style dangerouslySetInnerHTML={{
+            __html: `
+              .overflow-x-auto::-webkit-scrollbar {
+                display: none;
+              }
+            `
+          }} />
           {services.map((service, index) => (
             <div 
               key={index} 
