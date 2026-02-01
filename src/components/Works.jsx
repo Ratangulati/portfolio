@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -18,7 +20,7 @@ const Works = () => {
   const numberContainerRef = useRef(null);
   const [currentNumber, setCurrentNumber] = useState('01');
   const [hoveredProject, setHoveredProject] = useState(null);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const projectRefs = useRef([]);
   const projectsContainerRef = useRef(null);
 
@@ -80,9 +82,9 @@ const Works = () => {
     },
   ];
 
-  // Set mounted state
+  // Set client flag
   useEffect(() => {
-    setIsMounted(true);
+    setIsClient(true);
   }, []);
 
   // Rolling digit component
@@ -91,7 +93,7 @@ const Works = () => {
     const prevDigit = useRef(digit);
 
     useEffect(() => {
-      if (!isMounted) return;
+      if (!isClient) return;
       
       if (prevDigit.current !== digit && digitRef.current) {
         gsap.fromTo(
@@ -101,7 +103,7 @@ const Works = () => {
         );
         prevDigit.current = digit;
       }
-    }, [digit, isMounted]);
+    }, [digit]);
 
     return (
       <div className="digit-container" style={{ 
@@ -120,7 +122,7 @@ const Works = () => {
 
   // Number changes based on scroll
   useEffect(() => {
-    if (!isMounted || typeof window === 'undefined') return;
+    if (!isClient) return;
 
     const ctx = gsap.context(() => {
       projectRefs.current.forEach((ref, index) => {
@@ -137,20 +139,21 @@ const Works = () => {
     }, sectionRef);
 
     return () => ctx.revert();
-  }, [isMounted]);
+  }, [isClient]);
 
+  // Animations
   useEffect(() => {
-    if (!isMounted || typeof window === 'undefined') return;
+    if (!isClient) return;
 
     const ctx = gsap.context(() => {
-      const isMobile = window.innerWidth < 768;
+      const mm = gsap.matchMedia();
 
-      // TITLE ANIMATION - Simplified, no SplitText
-      if (titleRef.current) {
+      mm.add("(max-width: 767px)", () => {
+        // MOBILE - simple animations
         gsap.from(titleRef.current, {
           opacity: 0,
-          y: isMobile ? 30 : 50,
-          duration: isMobile ? 0.6 : 0.8,
+          y: 30,
+          duration: 0.6,
           ease: 'power2.out',
           scrollTrigger: { 
             trigger: titleRef.current, 
@@ -158,15 +161,12 @@ const Works = () => {
             toggleActions: 'play none none none' 
           },
         });
-      }
 
-      // PARAGRAPH ANIMATION - Simplified, no SplitText
-      if (paragraphRef.current) {
         gsap.from(paragraphRef.current, {
           opacity: 0,
-          y: isMobile ? 20 : 30,
-          duration: isMobile ? 0.5 : 0.8,
-          delay: isMobile ? 0.2 : 0.3,
+          y: 20,
+          duration: 0.5,
+          delay: 0.3,
           ease: 'power2.out',
           scrollTrigger: { 
             trigger: titleRef.current, 
@@ -174,38 +174,73 @@ const Works = () => {
             toggleActions: 'play none none none' 
           },
         });
-      }
 
-      // LABEL ANIMATION
-      const labelElement = document.querySelector('.works-intro-label');
-      if (labelElement) {
-        gsap.from(labelElement, {
+        gsap.from('.works-intro-label', {
           opacity: 0, 
-          y: isMobile ? 15 : 30, 
-          duration: isMobile ? 0.6 : 1, 
-          delay: isMobile ? 0.1 : 0.2, 
+          y: 15, 
+          duration: 0.6, 
+          delay: 0.1, 
           ease: 'power3.out',
           scrollTrigger: { 
-            trigger: labelElement, 
+            trigger: '.works-intro-label', 
             start: 'top 85%', 
             toggleActions: 'play none none none' 
           },
         });
-      }
+      });
 
-      // PIN NUMBER (Desktop only)
-      if (!isMobile && numberContainerRef.current && projectsContainerRef.current) {
-        ScrollTrigger.create({
-          trigger: projectsContainerRef.current,
-          start: 'top top',
-          end: 'bottom bottom',
-          pin: numberContainerRef.current,
-          pinSpacing: false,
+      mm.add("(min-width: 768px)", () => {
+        // DESKTOP
+        gsap.from(titleRef.current, {
+          opacity: 0,
+          y: 50,
+          duration: 0.8,
+          ease: 'power2.out',
+          scrollTrigger: { 
+            trigger: titleRef.current, 
+            start: 'top 85%', 
+            toggleActions: 'play none none none' 
+          },
         });
-      }
 
-      // Animate project cards (Desktop only)
-      if (!isMobile) {
+        gsap.from(paragraphRef.current, {
+          opacity: 0,
+          y: 30,
+          duration: 0.8,
+          delay: 0.3,
+          ease: 'power2.out',
+          scrollTrigger: { 
+            trigger: titleRef.current, 
+            start: 'top 85%', 
+            toggleActions: 'play none none none' 
+          },
+        });
+
+        gsap.from('.works-intro-label', {
+          opacity: 0, 
+          y: 30, 
+          duration: 1, 
+          delay: 0.2, 
+          ease: 'power3.out',
+          scrollTrigger: { 
+            trigger: '.works-intro-label', 
+            start: 'top 85%', 
+            toggleActions: 'play none none none' 
+          },
+        });
+
+        // Pin number
+        if (numberContainerRef.current && projectsContainerRef.current) {
+          ScrollTrigger.create({
+            trigger: projectsContainerRef.current,
+            start: 'top top',
+            end: 'bottom bottom',
+            pin: numberContainerRef.current,
+            pinSpacing: false,
+          });
+        }
+
+        // Animate project cards
         projectRefs.current.forEach((ref) => {
           if (ref) {
             gsap.from(ref, {
@@ -221,11 +256,79 @@ const Works = () => {
             });
           }
         });
-      }
+      });
+
+      return () => mm.revert();
     }, sectionRef);
 
     return () => ctx.revert();
-  }, [isMounted]);
+  }, [isClient]);
+
+  if (!isClient) {
+    // SSR render - basic structure
+    return (
+      <section id="works" ref={sectionRef} className="min-h-screen pt-16 md:pt-32 pb-16 md:pb-32 bg-black">
+        <div className="content-container px-5 md:px-10">
+          <div className="mb-12 md:mb-32">
+            <div className="w-full overflow-hidden mb-8 md:mb-12">
+              <h2 ref={titleRef} className="works-title text-4xl md:text-5xl lg:text-[6rem] font-semibold text-[#d1d1c7] tracking-[-0.05em] leading-none">
+                SELECTED WORKS /
+              </h2>
+            </div>
+
+            <div className="flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-12">
+              <div className="hidden md:block md:col-span-4"></div>
+              <div className="md:col-span-2 flex md:justify-end">
+                <p className="works-intro-label text-[#6b645c] text-sm md:text-base uppercase tracking-[-0.02em]">(PROJECTS)</p>
+              </div>
+              <div className="md:col-span-5">
+                <div style={{ overflow: 'hidden' }}>
+                  <p ref={paragraphRef} className="text-[#a39e9b] text-base md:text-lg lg:text-xl leading-relaxed">
+                    These are some of my projects built with modern technologies—from real-time collaboration platforms to AI-powered automation tools that enhance developer productivity and streamline workflows.
+                  </p>
+                </div>
+              </div>
+              <div className="hidden md:block md:col-span-1"></div>
+            </div>
+          </div>
+
+          <div className="md:hidden -mx-5 pb-8">
+            <div className="flex gap-4 overflow-x-scroll pb-6 px-5">
+              {projects.map((project, index) => (
+                <div key={index} className="flex-shrink-0 w-[85vw]">
+                  <a 
+                    href={project.liveUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="relative w-full aspect-[4/5] rounded-xl overflow-hidden bg-black border border-white/10 block"
+                  >
+                    <img src={project.image} alt={project.title} className="w-full h-full object-contain bg-black" />
+                  </a>
+                  <div className="py-3">
+                    <p className="text-sm font-mono text-[#6b645c] mb-1">{project.title}</p>
+                    <p className="text-xl text-[#d1d1c7] font-semibold tracking-tight mb-3">{project.subtitle}</p>
+                    <div className="flex gap-2 flex-wrap">
+                      <a 
+                        href={project.githubUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center min-w-[100px] px-3 py-1 rounded-full border border-[#a39e9b] text-xs uppercase font-medium text-[#a39e9b] whitespace-nowrap"
+                      >
+                        GitHub ↗
+                      </a>
+                      <span className="inline-flex items-center justify-center min-w-[60px] px-3 py-1 rounded-full bg-[#a39e9b] text-xs font-medium text-[#111827] whitespace-nowrap">
+                        {project.year}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="works" ref={sectionRef} className="min-h-screen pt-16 md:pt-32 pb-16 md:pb-32 bg-black">
@@ -254,21 +357,18 @@ const Works = () => {
           </div>
         </div>
 
-        {/* MOBILE: Horizontal scrolling carousel with improved scroll behavior */}
+        {/* MOBILE: Horizontal scrolling carousel */}
         <div className="md:hidden -mx-5 pb-8">
           <div 
-            className="mobile-scroll-container flex gap-4 pb-6 px-5 snap-x snap-mandatory"
+            className="flex gap-4 overflow-x-auto pb-6 px-5 snap-x snap-mandatory"
             style={{ 
-              overflowX: 'auto',
-              overflowY: 'hidden',
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
-              WebkitOverflowScrolling: 'touch',
             }}
           >
             <style dangerouslySetInnerHTML={{
               __html: `
-                .mobile-scroll-container::-webkit-scrollbar {
+                .overflow-x-auto::-webkit-scrollbar {
                   display: none;
                 }
               `
@@ -327,12 +427,8 @@ const Works = () => {
             <div ref={numberContainerRef} className="pt-2 md:pt-3">
               <div className="text-[12rem] lg:text-[20rem] font-medium text-[#a39e9b] leading-none tracking-[-0.05em]" 
                    style={{ fontFamily: "'Cousine', monospace" }}>
-                {isMounted && (
-                  <>
-                    <RollingDigit digit={currentNumber[0]} />
-                    <RollingDigit digit={currentNumber[1]} />
-                  </>
-                )}
+                <RollingDigit digit={currentNumber[0]} />
+                <RollingDigit digit={currentNumber[1]} />
               </div>
             </div>
           </div>
