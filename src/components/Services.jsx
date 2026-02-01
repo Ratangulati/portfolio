@@ -239,7 +239,7 @@ const Services = () => {
                         key={techIndex}
                         className="flex items-start gap-4 md:gap-6 text-[#6b645c] py-4 first:pt-0"
                       >
-                        <span className="text-sm md:text-base font-mono mt-1 flex-shrink-0">{tech.label}</span>
+                        <span className="text-sm mssd:text-base font-mono mt-1 flex-shrink-0">{tech.label}</span>
                         <span className="text-base md:text-xl lg:text-2xl tracking-tight leading-relaxed font-medium text-[#bfbfb2]">
                           {tech.text}
                         </span>
